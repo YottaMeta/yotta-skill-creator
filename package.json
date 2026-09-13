@@ -23,6 +23,7 @@
     "template",
     "assets",
     "bin",
+    "!scripts/test_*.py",
     "!**/__pycache__",
     "!**/*.pyc"
   ],
