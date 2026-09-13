@@ -11,5 +11,3 @@ node_modules/
 Thumbs.db
 Desktop.ini
 .DS_Store
-
-# GitHub Actions workflow（当前 PAT 无 workflow scope，不入库）
