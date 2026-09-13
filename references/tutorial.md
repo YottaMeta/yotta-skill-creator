@@ -8,7 +8,7 @@
 - 学会 `create` 的完整用法与选项；
 - 理解命名规则与中文名规范（`yotta-` 前缀 + `元X`）；
 - 分清完整模式与自用模式；
-- 前置：Python 3.8+（无需任何第三方库）；一个新技能的名字与一句话定位。
+- 前置：Python 3.8+（无需额外依赖）；一个新技能的名字与一句话定位。
 
 ## 2. 快速体验：造一个完整发布版脚手架
 
@@ -50,7 +50,7 @@ python3 scripts/yotta_skill_creator.py create yotta-private --zh 元私 \
 ```
 
 只生成 SKILL.md / references/（--with-cli 时含 scripts/）；输出明确提示「自用模式：未生成发布件」。
-自用技能不推 GitHub / npm / ClawHub，直接用技能本体即可。
+自用技能不发布到 GitHub / npm / ClawHub，直接用技能本体即可。
 
 ## 7. 结构自检失败怎么办
 

@@ -15,19 +15,19 @@
 
 ## 这是什么
 
-TODO：描述这个技能做什么、什么时候触发、输出什么。
+填写：描述这个技能做什么、什么时候触发、输出什么。
 
 ## 何时使用
 
-- TODO：触发场景一。
-- TODO：触发场景二。
+- 填写：触发场景一。
+- 填写：触发场景二。
 
-**Do NOT trigger**：TODO：边界。
+**Do NOT trigger**：填写边界。
 
 ## 快速使用
 
 ```bash
-# TODO：替换为本技能真实命令
+# 填写：替换为本技能真实命令
 python3 scripts/{{skill_name}}.py --help
 ```
 
@@ -71,7 +71,7 @@ bash install.sh --list           # 列出智能体 -> 默认目录
 ## 开发与校验
 
 ```bash
-# TODO：跑本技能自带测试
+# 填写：跑本技能自带测试
 python scripts/test_{{skill_name}}.py
 ```
 

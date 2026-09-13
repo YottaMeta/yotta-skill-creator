@@ -15,19 +15,19 @@
 
 ## What it is
 
-TODO: describe what this skill does, when it triggers, and what it outputs.
+Fill in: describe what this skill does, when it triggers, and what it outputs.
 
 ## When to use
 
-- TODO: trigger scenarios.
-- TODO: more trigger scenarios.
+- Fill in: trigger scenarios.
+- Fill in: more trigger scenarios.
 
-**Do NOT trigger** when: TODO: boundaries.
+**Do NOT trigger** when: Fill in boundaries.
 
 ## Quick usage
 
 ```bash
-# TODO: replace with real commands this skill ships
+# Fill in: replace with real commands this skill ships
 python3 scripts/{{skill_name}}.py --help
 ```
 
@@ -70,7 +70,7 @@ bash install.sh --list           # list agents -> default directories
 ## Development & validation
 
 ```bash
-# TODO: run the skill's own test suite
+# Fill in: run the skill's own test suite
 python scripts/test_{{skill_name}}.py
 ```
 
