@@ -35,7 +35,7 @@ try:
 except Exception:
     pass
 
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 TOOL_NAME = "yotta-skill-creator"
 CN_NAME = "元造"
 
@@ -55,6 +55,11 @@ FORBIDDEN_INSTALL = {
 }
 
 TEMPLATE_DIR = Path(__file__).resolve().parent.parent / "template"
+TEMPLATE_FILE_MAP = {
+    "SKILL.md.tmpl": "SKILL.md",
+    ".gitignore.tmpl": ".gitignore",
+    ".npmignore.tmpl": ".npmignore",
+}
 
 # 自用模式（--self-use）不生成的发布件（顶层名）
 PUBLISH_TOP_LEVEL = {
@@ -98,7 +103,8 @@ def render(template: Path, out: Path, subs, skip_installer, with_cli, no_banner,
         rel = src.relative_to(template)
         parts = list(rel.parts)
         first = parts[0] if parts else ""
-        if self_use and first in PUBLISH_TOP_LEVEL:
+        logical_first = TEMPLATE_FILE_MAP.get(first, first)
+        if self_use and logical_first in PUBLISH_TOP_LEVEL:
             continue
         if first == "assets" and no_banner:
             continue
@@ -112,6 +118,9 @@ def render(template: Path, out: Path, subs, skip_installer, with_cli, no_banner,
             def _repl(m):
                 return subs.get(m.group(1), m.group(0))
             new_parts = [re.sub(r"\{\{(\w+)\}\}", _repl, p) for p in parts]
+            mapped_name = TEMPLATE_FILE_MAP.get(new_parts[-1])
+            if mapped_name:
+                new_parts[-1] = mapped_name
             dst = out.joinpath(*new_parts)
             dst.parent.mkdir(parents=True, exist_ok=True)
             text = src.read_text(encoding="utf-8")

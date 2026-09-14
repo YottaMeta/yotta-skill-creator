@@ -89,6 +89,71 @@ class TestCreate(unittest.TestCase):
                     "assets/README.md", ".github/workflows/publish.yml"):
             self.assertTrue((d / rel).is_file(), "缺少 " + rel)
 
+    def test_render_maps_skill_template_to_skill_md(self):
+        td = tempfile.mkdtemp(prefix="ysc-render-")
+        self.addCleanup(shutil.rmtree, td, ignore_errors=True)
+        template = Path(td) / "template"
+        template.mkdir()
+        (template / "SKILL.md.tmpl").write_text(
+            "---\nname: {{skill_name}}\n---\n", encoding="utf-8")
+        out = Path(td) / "out"
+
+        mod.render(template, out, {"skill_name": "yotta-render-test"},
+                   skip_installer=False, with_cli=False, no_banner=False)
+
+        self.assertTrue((out / "SKILL.md").is_file())
+        self.assertFalse((out / "SKILL.md.tmpl").exists())
+
+    def test_render_maps_pack_safe_ignore_templates(self):
+        td = tempfile.mkdtemp(prefix="ysc-render-")
+        self.addCleanup(shutil.rmtree, td, ignore_errors=True)
+        template = Path(td) / "template"
+        template.mkdir()
+        (template / ".gitignore.tmpl").write_text(
+            "__pycache__/\n", encoding="utf-8")
+        (template / ".npmignore.tmpl").write_text(
+            ".npmignore\n", encoding="utf-8")
+        out = Path(td) / "out"
+
+        mod.render(template, out, {}, skip_installer=False,
+                   with_cli=False, no_banner=False)
+
+        self.assertTrue((out / ".gitignore").is_file())
+        self.assertTrue((out / ".npmignore").is_file())
+        self.assertFalse((out / ".gitignore.tmpl").exists())
+        self.assertFalse((out / ".npmignore.tmpl").exists())
+
+    def test_template_directory_has_no_host_scannable_skill_md(self):
+        self.assertFalse((mod.TEMPLATE_DIR / "SKILL.md").exists(),
+                         "模板目录不得包含会被宿主递归扫描的 SKILL.md")
+        self.assertTrue((mod.TEMPLATE_DIR / "SKILL.md.tmpl").is_file(),
+                        "技能模板应以 SKILL.md.tmpl 保存")
+
+    def test_template_ignore_files_use_pack_safe_names(self):
+        self.assertTrue((mod.TEMPLATE_DIR / ".gitignore.tmpl").is_file())
+        self.assertTrue((mod.TEMPLATE_DIR / ".npmignore.tmpl").is_file())
+        self.assertFalse((mod.TEMPLATE_DIR / ".gitignore").exists())
+        self.assertFalse((mod.TEMPLATE_DIR / ".npmignore").exists())
+
+    def test_official_installer_preserves_nested_template_payload(self):
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node 不可用")
+        td = tempfile.mkdtemp(prefix="ysc-install-")
+        self.addCleanup(shutil.rmtree, td, ignore_errors=True)
+        installer = HERE.parent / "bin" / "install.js"
+        r = subprocess.run([node, str(installer), "--dir", td],
+                           capture_output=True)
+        self.assertEqual(r.returncode, 0,
+                         r.stderr.decode("utf-8", errors="replace"))
+        installed = Path(td) / "yotta-skill-creator"
+        for rel in ("template/package.json", "template/bin/install.js",
+                    "template/SKILL.md.tmpl", "template/.gitignore.tmpl",
+                    "template/.npmignore.tmpl"):
+            self.assertTrue((installed / rel).is_file(), "缺少安装载荷: " + rel)
+        self.assertFalse((installed / "package.json").exists())
+        self.assertFalse((installed / "bin").exists())
+
     def test_no_leftover_placeholders(self):
         d, _ = self._create()
         for f in d.rglob("*"):

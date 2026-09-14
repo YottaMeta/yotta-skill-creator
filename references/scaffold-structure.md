@@ -1,6 +1,6 @@
 # 脚手架目录结构说明
 
-> 配套技能：元造 yotta-skill-creator v0.1.0
+> 配套技能：元造 yotta-skill-creator v0.1.2
 > 完整模式生成的文件清单与用途；自用模式对照见文末。
 
 ## 完整模式（默认）
@@ -28,6 +28,8 @@
 
 `create` 一次性替换的模板变量：`skill_name` / `zh_name` / `cli_module` / `description` /
 `summary` / `year`；`scripts/` 文件名中的 `<cli_module>` 同步重命名。
+模板内的 `SKILL.md.tmpl` / `.gitignore.tmpl` / `.npmignore.tmpl` 在生成目录分别
+映射为标准文件名 `SKILL.md` / `.gitignore` / `.npmignore`。
 生成后不允许存在残留双花括号占位符（结构自检会拦截）。
 
 ## 自用模式（--self-use）

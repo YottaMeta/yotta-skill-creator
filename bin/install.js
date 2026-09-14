@@ -60,18 +60,20 @@ function resolveUserDir(rel) {
 function installTo(dest) {
   const target = path.join(dest, SKILL_NAME);
   fs.mkdirSync(target, { recursive: true });
-  copyDir(PKG_ROOT, target, new Set(['package.json', 'bin', 'node_modules', '.git']));
+  copyDir(PKG_ROOT, target,
+          new Set(['package.json', 'bin', 'node_modules', '.git']), true);
   console.log('installed -> ' + target);
 }
 
-function copyDir(src, dst, skip) {
+function copyDir(src, dst, skip, topLevel) {
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
-    if (skip.has(entry.name)) continue;
+    // 只跳过安装包顶层文件；template/ 内的同名载荷必须保留。
+    if (topLevel && skip.has(entry.name)) continue;
     const s = path.join(src, entry.name);
     const d = path.join(dst, entry.name);
     if (entry.isDirectory()) {
       fs.mkdirSync(d, { recursive: true });
-      copyDir(s, d, skip);
+      copyDir(s, d, skip, false);
     } else if (entry.isFile()) {
       fs.copyFileSync(s, d);
     }
