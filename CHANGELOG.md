@@ -1,5 +1,13 @@
 # 更新日志
 
+## v0.1.3 (2026-09-25)
+
+安全修复：外部元数据白名单校验 + YAML 引号化 + 生成后回读。
+
+- 背景：`--desc` / `--summary` / `--zh` 直接字符串替换进 SKILL.md frontmatter、package.json、README 与生成的 CLI 源码——含换行、`---` 或引号的输入可注入额外 frontmatter 字段或指令（ClawHub T09 High）。
+- 修复：元数据统一走 `validate_meta_text()`（控制字符 / `---` / 引号 / 反斜杠 / 反引号 / 超长一律拒绝）、frontmatter 用 YAML 双引号转义写入、生成后 `verify_generated_frontmatter()` 回读校验（name / description 与入参一致、无额外顶层键）。
+- 回归：新增 5 项注入用例，测试 30/30 通过。
+
 ## v0.1.2 (2026-09-14)
 
 - 修复嵌套模板被宿主递归扫描导致的 YAML 解析告警：`template/SKILL.md` 改名为

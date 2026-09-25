@@ -215,6 +215,56 @@ class TestCreate(unittest.TestCase):
         self.assertIn("已存在", err)
 
 
+class TestMetaInjectionGuard(unittest.TestCase):
+    """v0.1.3：外部元数据不得注入 frontmatter / 生成文件（T09 修复回归）。"""
+
+    def _run(self, desc, summary="一句话", slug="yotta-test-meta"):
+        td = tempfile.mkdtemp(prefix="ysc-meta-")
+        self.addCleanup(shutil.rmtree, td, ignore_errors=True)
+        self._last_td = Path(td)
+        return run_cli("create", slug, "--zh", "元测乙",
+                       "--desc", desc, "--summary", summary, "--out", td)
+
+    def test_newline_in_desc_rejected(self):
+        code, out, err = self._run("第一行\nname: 注入名")
+        self.assertEqual(code, 2, out + err)
+        self.assertIn("控制字符", err)
+
+    def test_frontmatter_separator_rejected(self):
+        code, _out, err = self._run("正常描述 --- 注入")
+        self.assertEqual(code, 2)
+        self.assertIn("---", err)
+
+    def test_quote_and_backslash_rejected(self):
+        for bad in ('描述带引号 "x"', "反斜杠 \\ 注入", "反引号 `注入`"):
+            code, _out, err = self._run(bad)
+            self.assertEqual(code, 2, bad)
+            self.assertIn("保留字符", err)
+
+    def test_valid_desc_roundtrip(self):
+        desc = "测试技能：做什么。触发：用户说 元测乙。边界：不做什么。"
+        code, _out, err = self._run(desc)
+        self.assertEqual(code, 0, err)
+        td = self._last_td
+        skill = td / "yotta-test-meta" / "SKILL.md"
+        fm = mod.parse_frontmatter(skill.read_text(encoding="utf-8"))
+        self.assertEqual(fm.get("name"), "yotta-test-meta")
+        self.assertEqual(fm.get("description"), desc)
+        self.assertEqual(fm.get("version"), "0.1.0")
+
+    def test_readback_detects_extra_key(self):
+        td = Path(tempfile.mkdtemp(prefix="ysc-readback-"))
+        self.addCleanup(shutil.rmtree, str(td), ignore_errors=True)
+        d = td / "yotta-test-meta"
+        d.mkdir()
+        (d / "SKILL.md").write_text(
+            "---\nname: yotta-test-meta\ndescription: \"ok\"\n"
+            "version: 0.1.0\nlicense: MIT\ninjected: yes\n---\n",
+            encoding="utf-8")
+        with self.assertRaises(ValueError):
+            mod.verify_generated_frontmatter(d, "yotta-test-meta", "ok")
+
+
 class TestSelfUse(unittest.TestCase):
     def test_self_use_minimal(self):
         td = tempfile.mkdtemp(prefix="ysc-self-")

@@ -35,7 +35,7 @@ try:
 except Exception:
     pass
 
-VERSION = "0.1.2"
+VERSION = "0.1.3"
 TOOL_NAME = "yotta-skill-creator"
 CN_NAME = "元造"
 
@@ -89,6 +89,51 @@ def validate_zh(zh: str) -> str:
     if not 2 <= len(zh) <= 8:
         raise ValueError("中文名长度应为 2-8 个字符（元 + 1-7 字）")
     return zh
+
+
+# v0.1.3：外部元数据（描述 / 摘要 / 中文名）会被写进 SKILL.md frontmatter、package.json、
+# 文档与生成的 CLI 源码。旧行为直接字符串替换，含引号 / 换行 / `---` 的输入可以注入
+# 额外 frontmatter 字段或指令。现在统一走白名单校验 + YAML 引号化 + 生成后回读校验。
+_META_MAX_LEN = {"desc": 400, "summary": 200, "zh": 8}
+
+
+def validate_meta_text(label: str, value: str, limit: int) -> str:
+    v = (value or "").strip()
+    if not v:
+        raise ValueError("%s 不能为空" % label)
+    if len(v) > limit:
+        raise ValueError("%s 过长（> %d 字符）" % (label, limit))
+    if any(ord(ch) < 0x20 for ch in v):
+        raise ValueError("%s 含控制字符（换行 / 制表符等），会破坏生成文件的语法" % label)
+    if "---" in v:
+        raise ValueError("%s 含 frontmatter 分隔符 '---'，已拒绝" % label)
+    for ch in ('"', "\\", "`"):
+        if ch in v:
+            raise ValueError("%s 含保留字符 %s，请改用其他写法" % (label, ch))
+    return v
+
+
+def yaml_quote(value: str) -> str:
+    """把元数据安全地写进 YAML frontmatter（双引号 + 转义反斜杠与双引号）。"""
+    return '"%s"' % value.replace("\\", "\\\\").replace('"', '\\"')
+
+
+FRONTMATTER_KEYS = {"name", "description", "version", "license", "metadata"}
+
+
+def verify_generated_frontmatter(skill_dir: Path, slug: str, desc: str) -> None:
+    """生成后回读校验：frontmatter 必须可解析、字段与入参一致、不出现额外顶层键。"""
+    skill_md = skill_dir / "SKILL.md"
+    text = skill_md.read_text(encoding="utf-8")
+    fm = parse_frontmatter(text)
+    if fm.get("name") != slug:
+        raise ValueError("生成后回读失败：frontmatter name=%r != %r"
+                         % (fm.get("name"), slug))
+    if fm.get("description") != desc:
+        raise ValueError("生成后回读失败：description 与入参不一致（疑似转义问题）")
+    extra = sorted(set(fm) - FRONTMATTER_KEYS)
+    if extra:
+        raise ValueError("生成后回读失败：frontmatter 出现额外字段 %s" % ", ".join(extra))
 
 
 def cli_module(slug: str) -> str:
@@ -260,14 +305,13 @@ def cmd_create(args) -> int:
     try:
         slug = normalize_slug(args.skill_name)
         zh = validate_zh(args.zh)
+        desc = validate_meta_text("--desc 描述", args.desc, _META_MAX_LEN["desc"])
+        summary = validate_meta_text("--summary 摘要",
+                                     args.summary or args.desc,
+                                     _META_MAX_LEN["summary"])
     except ValueError as e:
         print("[ERROR] %s" % e, file=sys.stderr)
         return 2
-
-    if not args.desc.strip():
-        print("[ERROR] --desc 不能为空", file=sys.stderr)
-        return 2
-    summary = args.summary.strip() or args.desc.strip()
 
     out_root = Path(args.out).expanduser().resolve()
     out = out_root / slug
@@ -281,8 +325,10 @@ def cmd_create(args) -> int:
     subs = {
         "skill_name": slug,
         "zh_name": zh,
+        "zh_name_yaml": yaml_quote(zh),
         "cli_module": cli_module(slug),
-        "description": args.desc.strip(),
+        "description": desc,
+        "description_yaml": yaml_quote(desc),
         "summary": summary,
         "year": str(date.today().year),
     }
@@ -295,6 +341,12 @@ def cmd_create(args) -> int:
                      self_use=args.self_use)
     if not args.self_use:
         adjust_package_json(out, args.skip_installer, args.no_banner)
+
+    try:
+        verify_generated_frontmatter(out, slug, desc)
+    except (ValueError, OSError) as e:
+        print("[ERROR] %s" % e, file=sys.stderr)
+        return 2
 
     errors, warns = self_check(out, slug, args.skip_installer,
                                args.with_cli, args.no_banner,

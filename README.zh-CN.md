@@ -119,8 +119,8 @@ package.json · SKILL.md · CHANGELOG 顶部版本一致 / README 中英各含�
 
 ```text
 # 可选国内加速：npm config set registry https://registry.npmmirror.com
-npx -y @yottameta/yotta-skill-creator --agent <智能体名称>      # 装到指定智能体默认用户级技能目录
-npx -y @yottameta/yotta-skill-creator --dir <智能体的技能目录>  # 指到技能目录本身（如 ~/.codex/skills）
+npx -y @yottameta/yotta-skill-creator@0.1.3 --agent <智能体名称>      # 装到指定智能体默认用户级技能目录
+npx -y @yottameta/yotta-skill-creator@0.1.3 --dir <智能体的技能目录>  # 指到技能目录本身（如 ~/.codex/skills）
 ```
 
 - `--agent <name>` 自动装到该智能体默认用户级目录；`--list` 可查看各智能体默认目录。
