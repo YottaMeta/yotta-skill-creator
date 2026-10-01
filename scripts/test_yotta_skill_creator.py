@@ -154,6 +154,42 @@ class TestCreate(unittest.TestCase):
         self.assertFalse((installed / "package.json").exists())
         self.assertFalse((installed / "bin").exists())
 
+    def test_template_installer_preserves_nested_payload(self):
+        """v0.1.4 回归：模板内的 bin/install.js 与自身安装器同口径（仅顶层跳过）。"""
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node 不可用")
+        td = tempfile.mkdtemp(prefix="ysc-tpl-install-")
+        self.addCleanup(shutil.rmtree, td, ignore_errors=True)
+        pkg = Path(td) / "pkg"
+        rendered = (mod.TEMPLATE_DIR / "bin" / "install.js").read_text(encoding="utf-8")
+        rendered = rendered.replace("{{skill_name}}", "yotta-template-probe")
+        (pkg / "bin").mkdir(parents=True)
+        (pkg / "bin" / "install.js").write_text(rendered, encoding="utf-8")
+        (pkg / "SKILL.md").write_text(
+            "---\nname: yotta-template-probe\n---\n", encoding="utf-8")
+        (pkg / "package.json").write_text(
+            '{"name":"@yottameta/yotta-template-probe"}', encoding="utf-8")
+        (pkg / "template" / "bin").mkdir(parents=True)
+        (pkg / "template" / "package.json").write_text(
+            '{"name":"{{skill_name}}"}', encoding="utf-8")
+        (pkg / "template" / "bin" / "install.js").write_text(
+            "// nested payload", encoding="utf-8")
+        out = Path(td) / "out"
+        out.mkdir()
+        r = subprocess.run([node, str(pkg / "bin" / "install.js"), "--dir", str(out)],
+                           capture_output=True)
+        self.assertEqual(r.returncode, 0,
+                         r.stderr.decode("utf-8", errors="replace"))
+        installed = out / "yotta-template-probe"
+        self.assertTrue((installed / "SKILL.md").is_file())
+        self.assertFalse((installed / "package.json").exists(),
+                         "顶层 package.json 应跳过")
+        self.assertTrue((installed / "template" / "package.json").is_file(),
+                        "嵌套 template/package.json 必须保留")
+        self.assertTrue((installed / "template" / "bin" / "install.js").is_file(),
+                        "嵌套 template/bin/install.js 必须保留")
+
     def test_no_leftover_placeholders(self):
         d, _ = self._create()
         for f in d.rglob("*"):
