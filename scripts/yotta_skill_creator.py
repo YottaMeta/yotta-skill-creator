@@ -35,7 +35,7 @@ try:
 except Exception:
     pass
 
-VERSION = "0.1.4"
+VERSION = "0.1.5"
 TOOL_NAME = "yotta-skill-creator"
 CN_NAME = "元造"
 
@@ -324,6 +324,7 @@ def cmd_create(args) -> int:
 
     subs = {
         "skill_name": slug,
+        "install_command": "npx -y @yottameta/" + slug,
         "zh_name": zh,
         "zh_name_yaml": yaml_quote(zh),
         "cli_module": cli_module(slug),

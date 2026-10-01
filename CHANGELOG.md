@@ -1,5 +1,10 @@
 # 更新日志
 
+## v0.1.5 (2026-10-01)
+
+- 安装器卫生批次：`bin/install.js` / `install.sh` 统一（未知参数报错 exit 2、`--help` / `--version`、残留清理白名单、嵌套载荷保留）；由模板单一真源渲染，接入漂移门禁。
+- `template/bin/install.js` / `template/install.sh` 升级为统一安装器单一真源。
+
 ## v0.1.4 (2026-10-01)
 
 模板安装器同步顶层跳过修复。
