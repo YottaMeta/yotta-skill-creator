@@ -35,7 +35,7 @@ try:
 except Exception:
     pass
 
-VERSION = "0.1.5"
+VERSION = "0.1.6"
 TOOL_NAME = "yotta-skill-creator"
 CN_NAME = "元造"
 
