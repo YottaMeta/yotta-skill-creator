@@ -35,7 +35,7 @@ try:
 except Exception:
     pass
 
-VERSION = "0.1.6"
+VERSION = "0.1.7"
 TOOL_NAME = "yotta-skill-creator"
 CN_NAME = "元造"
 
@@ -147,6 +147,8 @@ def render(template: Path, out: Path, subs, skip_installer, with_cli, no_banner,
     for src in sorted(template.rglob("*")):
         rel = src.relative_to(template)
         parts = list(rel.parts)
+        if "__pycache__" in parts or src.suffix == ".pyc":
+            continue
         first = parts[0] if parts else ""
         logical_first = TEMPLATE_FILE_MAP.get(first, first)
         if self_use and logical_first in PUBLISH_TOP_LEVEL:
